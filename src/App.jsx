@@ -1,5 +1,5 @@
 // RentIt (ToolStack) — module-ready MVP (Styled v1: grey + lime/green accent)
-// Updated: Normalized Top Actions + pinned far-right Help "?" icon + Help Pack v1 modal
+// Updated: Normalized Top Actions + pinned far-right Help "?" icon + Help Pack v1 modal (CONSISTENT v1.0)
 // Paste into: src/App.jsx
 // Requires: Tailwind v4 configured (same as other ToolStack apps).
 
@@ -144,13 +144,25 @@ function ActionButton({ children, onClick, tone = "default", disabled, title }) 
         : "bg-white hover:bg-neutral-50 text-neutral-900 border-neutral-200";
 
   return (
-    <button type="button" onClick={onClick} disabled={disabled} title={title} className={`${ACTION_BASE} ${cls}`}>
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      title={title}
+      className={`${ACTION_BASE} ${cls}`}
+    >
       {children}
     </button>
   );
 }
 
-function ActionFileButton({ children, onFile, accept = "application/json", tone = "primary", title }) {
+function ActionFileButton({
+  children,
+  onFile,
+  accept = "application/json",
+  tone = "primary",
+  title,
+}) {
   const cls =
     tone === "primary"
       ? "bg-neutral-900 hover:bg-neutral-800 text-white border-neutral-900"
@@ -169,10 +181,16 @@ function ActionFileButton({ children, onFile, accept = "application/json", tone 
   );
 }
 
-/** Help icon + modal (Help Pack v1) */
+/** Help icon + modal (Help Pack v1.0 — CONSISTENT ACROSS ALL APPS) */
 function HelpIcon({ className = "" }) {
   return (
-    <svg viewBox="0 0 24 24" className={className} fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      className={className}
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
       <path
         d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10Z"
         stroke="currentColor"
@@ -196,6 +214,7 @@ function HelpIcon({ className = "" }) {
 
 function HelpModal({ open, onClose, storageKey, profileKey }) {
   if (!open) return null;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-8 print:hidden">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
@@ -205,7 +224,7 @@ function HelpModal({ open, onClose, storageKey, profileKey }) {
             <div>
               <div className="text-lg font-semibold text-neutral-900">Help</div>
               <div className="text-sm text-neutral-600 mt-1">
-                Autosave, backup, and continuity (Help Pack v1)
+                Autosave, backups, and continuity (Help Pack v1.0)
               </div>
             </div>
             <button
@@ -224,22 +243,79 @@ function HelpModal({ open, onClose, storageKey, profileKey }) {
           <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-3">
             <div className="font-semibold text-neutral-900">How saving works</div>
             <ul className="mt-2 space-y-1 list-disc pl-5">
-              <li>This app autosaves to your browser (localStorage) as you work.</li>
-              <li>If you clear browser data / switch devices, local data can be lost.</li>
-              <li>Use <span className="font-medium">Export</span> to create a backup file, and <span className="font-medium">Import</span> to restore it.</li>
+              <li>This app autosaves on this device in your browser (localStorage).</li>
+              <li>
+                If you clear browser data, use a different browser/device, or use
+                private/incognito mode, data may not be there.
+              </li>
+              <li>
+                Use <span className="font-medium">Export</span> to create a backup
+                file you control.
+              </li>
+              <li>
+                Use <span className="font-medium">Import</span> to restore a backup
+                (it replaces the current app data).
+              </li>
             </ul>
           </div>
 
           <div className="rounded-2xl border border-neutral-200 bg-white p-3">
             <div className="font-semibold text-neutral-900">Recommended routine</div>
             <ul className="mt-2 space-y-1 list-disc pl-5">
-              <li>Export after important updates (letters sent, new evidence, big incidents).</li>
-              <li>Keep backups in a folder like: <span className="font-mono text-xs">ToolStack/Backups/RentIt</span>.</li>
-              <li>Use Preview → Print / Save PDF when you need a clean report for sharing.</li>
+              <li>
+                Export after important updates (new incidents, payments, evidence
+                references, or major edits).
+              </li>
+              <li>
+                Keep backups in a folder like:{" "}
+                <span className="font-mono text-xs">
+                  ToolStack/Backups/&lt;AppName&gt;
+                </span>
+                .
+              </li>
+              <li>
+                Use <span className="font-medium">Preview → Print / Save PDF</span>{" "}
+                when you need a clean report for sharing.
+              </li>
             </ul>
           </div>
 
           <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-3">
+            <div className="font-semibold text-neutral-900">Export / Import rules</div>
+            <ul className="mt-2 space-y-1 list-disc pl-5">
+              <li>
+                Export creates a JSON backup file you can store anywhere (Drive,
+                email to yourself, USB).
+              </li>
+              <li>Import restores from that JSON backup and overwrites current app data.</li>
+              <li>Before importing, export your current state first (so you can roll back if needed).</li>
+            </ul>
+          </div>
+
+          <div className="rounded-2xl border border-neutral-200 bg-white p-3">
+            <div className="font-semibold text-neutral-900">Printing / PDF</div>
+            <ul className="mt-2 space-y-1 list-disc pl-5">
+              <li>
+                Use <span className="font-medium">Preview</span> to check the report.
+              </li>
+              <li>
+                Use <span className="font-medium">Print / Save PDF</span> to generate a PDF from the preview report.
+              </li>
+            </ul>
+          </div>
+
+          <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-3">
+            <div className="font-semibold text-neutral-900">Troubleshooting</div>
+            <ul className="mt-2 space-y-1 list-disc pl-5">
+              <li>
+                If data “disappeared”, you are likely in a different browser/device/profile or you cleared site data.
+              </li>
+              <li>Import your latest backup JSON to restore instantly.</li>
+              <li>Avoid private/incognito mode for long-term records.</li>
+            </ul>
+          </div>
+
+          <div className="rounded-2xl border border-neutral-200 bg-white p-3">
             <div className="font-semibold text-neutral-900">Storage keys</div>
             <div className="mt-2 space-y-1">
               <div className="text-neutral-700">
@@ -513,7 +589,9 @@ export default function App() {
     const all = state.incidents || [];
     return all
       .filter((x) => (x.date || "") >= from && (x.date || "") <= to)
-      .sort((a, b) => `${b.date} ${b.createdAt}`.localeCompare(`${a.date} ${a.createdAt}`));
+      .sort((a, b) =>
+        `${b.date} ${b.createdAt}`.localeCompare(`${a.date} ${a.createdAt}`)
+      );
   }, [state.incidents, from, to]);
 
   const moduleManifest = useMemo(
@@ -545,7 +623,12 @@ export default function App() {
         `}</style>
       ) : null}
 
-      <HelpModal open={helpOpen} onClose={() => setHelpOpen(false)} storageKey={KEY} profileKey={PROFILE_KEY} />
+      <HelpModal
+        open={helpOpen}
+        onClose={() => setHelpOpen(false)}
+        storageKey={KEY}
+        profileKey={PROFILE_KEY}
+      />
 
       <div className="max-w-6xl mx-auto p-4 sm:p-6">
         {/* Header */}
@@ -783,7 +866,9 @@ export default function App() {
             <div className="flex flex-wrap items-end justify-between gap-3">
               <div>
                 <div className="font-semibold">Unit & landlord</div>
-                <div className="text-sm text-neutral-600">Keep everything in one place — clean, printable, exportable.</div>
+                <div className="text-sm text-neutral-600">
+                  Keep everything in one place — clean, printable, exportable.
+                </div>
               </div>
             </div>
 
@@ -1075,7 +1160,11 @@ export default function App() {
               </label>
               <label className="text-sm">
                 <div className="text-neutral-600">Status</div>
-                <select className={inputBase} value={issueStatus} onChange={(e) => setIssueStatus(e.target.value)}>
+                <select
+                  className={inputBase}
+                  value={issueStatus}
+                  onChange={(e) => setIssueStatus(e.target.value)}
+                >
                   <option value="open">Open</option>
                   <option value="progress">In progress</option>
                   <option value="resolved">Resolved</option>
@@ -1083,7 +1172,11 @@ export default function App() {
               </label>
               <label className="text-sm">
                 <div className="text-neutral-600">Severity</div>
-                <select className={inputBase} value={issueSeverity} onChange={(e) => setIssueSeverity(e.target.value)}>
+                <select
+                  className={inputBase}
+                  value={issueSeverity}
+                  onChange={(e) => setIssueSeverity(e.target.value)}
+                >
                   <option value="low">Low</option>
                   <option value="medium">Medium</option>
                   <option value="high">High</option>
