@@ -1,5 +1,5 @@
 // RentIt (ToolStack) — module-ready MVP (Styled v1: grey + lime/green accent)
-// Purpose: Rental unit tracker: unit + landlord details, cost breakdown, issues, incident log, export/import, print.
+// Updated: Normalized Top Actions + pinned far-right Help "?" icon + Help Pack v1 modal
 // Paste into: src/App.jsx
 // Requires: Tailwind v4 configured (same as other ToolStack apps).
 
@@ -86,7 +86,6 @@ function defaultState() {
 /** Optional: legacy migration hook placeholder */
 function migrateIfNeeded() {
   // If you later want to migrate from old Mietakte keys, do it here.
-  // Example:
   // const legacy = localStorage.getItem("toolstack.mietakte.v1");
   // if (legacy && !localStorage.getItem(KEY)) localStorage.setItem(KEY, legacy);
 }
@@ -106,7 +105,7 @@ function saveState(state) {
 }
 
 function toNum(v, fallback = 0) {
-  const n = Number(v);
+  const n = Number(String(v ?? "").replace(",", "."));
   return Number.isFinite(n) ? n : fallback;
 }
 
@@ -120,10 +119,6 @@ function moneyFmt(n, currency) {
   return `${x.toFixed(2)} ${currency}`;
 }
 
-const btnSecondary =
-  "px-3 py-2 rounded-xl bg-white border border-neutral-200 shadow-sm hover:bg-neutral-50 active:translate-y-[1px] transition";
-const btnPrimary =
-  "px-3 py-2 rounded-xl bg-neutral-900 text-white border border-neutral-900 shadow-sm hover:bg-neutral-800 active:translate-y-[1px] transition";
 const inputBase =
   "w-full mt-1 px-3 py-2 rounded-xl border border-neutral-200 bg-white focus:outline-none focus:ring-2 focus:ring-lime-400/25 focus:border-neutral-300";
 
@@ -136,17 +131,151 @@ const badge = {
   high: "bg-red-100 text-red-800 border-red-200",
 };
 
+/** Normalized Top Actions (mobile-aligned “table/grid”) */
+const ACTION_BASE =
+  "print:hidden h-10 w-full rounded-xl text-sm font-medium border transition shadow-sm active:translate-y-[1px] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center";
+
+function ActionButton({ children, onClick, tone = "default", disabled, title }) {
+  const cls =
+    tone === "primary"
+      ? "bg-neutral-900 hover:bg-neutral-800 text-white border-neutral-900"
+      : tone === "danger"
+        ? "bg-red-50 hover:bg-red-100 text-red-700 border-red-200"
+        : "bg-white hover:bg-neutral-50 text-neutral-900 border-neutral-200";
+
+  return (
+    <button type="button" onClick={onClick} disabled={disabled} title={title} className={`${ACTION_BASE} ${cls}`}>
+      {children}
+    </button>
+  );
+}
+
+function ActionFileButton({ children, onFile, accept = "application/json", tone = "primary", title }) {
+  const cls =
+    tone === "primary"
+      ? "bg-neutral-900 hover:bg-neutral-800 text-white border-neutral-900"
+      : "bg-white hover:bg-neutral-50 text-neutral-900 border-neutral-200";
+
+  return (
+    <label title={title} className={`${ACTION_BASE} ${cls} cursor-pointer`}>
+      <span>{children}</span>
+      <input
+        type="file"
+        accept={accept}
+        className="hidden"
+        onChange={(e) => onFile?.(e.target.files?.[0] || null)}
+      />
+    </label>
+  );
+}
+
+/** Help icon + modal (Help Pack v1) */
+function HelpIcon({ className = "" }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path
+        d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10Z"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
+      <path
+        d="M9.6 9.2a2.4 2.4 0 1 1 4.2 1.6c-.6.6-1.2.9-1.5 1.4-.3.4-.3.8-.3 1.4"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M12 17h.01"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function HelpModal({ open, onClose, storageKey, profileKey }) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-8 print:hidden">
+      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+      <div className="relative w-full max-w-2xl rounded-2xl bg-white border border-neutral-200 shadow-xl overflow-hidden">
+        <div className="p-4 border-b border-neutral-100">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <div className="text-lg font-semibold text-neutral-900">Help</div>
+              <div className="text-sm text-neutral-600 mt-1">
+                Autosave, backup, and continuity (Help Pack v1)
+              </div>
+            </div>
+            <button
+              type="button"
+              className="h-10 w-10 rounded-xl border border-neutral-200 bg-white hover:bg-neutral-50 text-neutral-900 flex items-center justify-center"
+              onClick={onClose}
+              title="Close"
+            >
+              ✕
+            </button>
+          </div>
+          <div className="mt-3 h-[2px] w-56 rounded-full bg-gradient-to-r from-lime-400/0 via-lime-400 to-emerald-400/0" />
+        </div>
+
+        <div className="p-4 space-y-4 text-sm text-neutral-800">
+          <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-3">
+            <div className="font-semibold text-neutral-900">How saving works</div>
+            <ul className="mt-2 space-y-1 list-disc pl-5">
+              <li>This app autosaves to your browser (localStorage) as you work.</li>
+              <li>If you clear browser data / switch devices, local data can be lost.</li>
+              <li>Use <span className="font-medium">Export</span> to create a backup file, and <span className="font-medium">Import</span> to restore it.</li>
+            </ul>
+          </div>
+
+          <div className="rounded-2xl border border-neutral-200 bg-white p-3">
+            <div className="font-semibold text-neutral-900">Recommended routine</div>
+            <ul className="mt-2 space-y-1 list-disc pl-5">
+              <li>Export after important updates (letters sent, new evidence, big incidents).</li>
+              <li>Keep backups in a folder like: <span className="font-mono text-xs">ToolStack/Backups/RentIt</span>.</li>
+              <li>Use Preview → Print / Save PDF when you need a clean report for sharing.</li>
+            </ul>
+          </div>
+
+          <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-3">
+            <div className="font-semibold text-neutral-900">Storage keys</div>
+            <div className="mt-2 space-y-1">
+              <div className="text-neutral-700">
+                App data: <span className="font-mono text-xs">{storageKey}</span>
+              </div>
+              <div className="text-neutral-700">
+                Shared profile: <span className="font-mono text-xs">{profileKey}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end gap-2 pt-1">
+            <button
+              type="button"
+              className="px-3 py-2 rounded-xl text-sm font-medium border border-neutral-200 bg-white hover:bg-neutral-50 text-neutral-900 transition"
+              onClick={onClose}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const [profile, setProfile] = useState(loadProfile());
   const [state, setState] = useState(loadState());
 
-  const importRef = useRef(null);
+  const [helpOpen, setHelpOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
 
   // Incident filters
   const [from, setFrom] = useState(() => {
     const t = isoToday();
-    // default: current month
     return t.slice(0, 7) + "-01";
   });
   const [to, setTo] = useState(isoToday());
@@ -176,6 +305,10 @@ export default function App() {
   }, [state]);
 
   const currency = state.costs?.currency || "EUR";
+
+  function clampMoney(v) {
+    return round2(Math.max(0, toNum(v, 0)));
+  }
 
   function updateUnit(patch) {
     setState((prev) => saveState({ ...prev, unit: { ...prev.unit, ...patch } }));
@@ -325,6 +458,7 @@ export default function App() {
   }
 
   function importJSON(file) {
+    if (!file) return;
     const reader = new FileReader();
     reader.onload = () => {
       try {
@@ -341,8 +475,9 @@ export default function App() {
   }
 
   function printPreview() {
+    // Print only the preview sheet
     setPreviewOpen(true);
-    setTimeout(() => window.print(), 50);
+    setTimeout(() => window.print(), 80);
   }
 
   const recurringMonthlyTotal = useMemo(() => {
@@ -392,15 +527,29 @@ export default function App() {
     []
   );
 
-  function clampMoney(v) {
-    return round2(Math.max(0, toNum(v, 0)));
-  }
-
   return (
     <div className="min-h-screen bg-neutral-50 text-neutral-900">
+      {/* Print rules */}
+      <style>{`
+        @media print { .print\\:hidden { display: none !important; } }
+      `}</style>
+
+      {/* When preview is open, print ONLY the preview sheet */}
+      {previewOpen ? (
+        <style>{`
+          @media print {
+            body * { visibility: hidden !important; }
+            #rentit-print, #rentit-print * { visibility: visible !important; }
+            #rentit-print { position: absolute !important; left: 0; top: 0; width: 100%; }
+          }
+        `}</style>
+      ) : null}
+
+      <HelpModal open={helpOpen} onClose={() => setHelpOpen(false)} storageKey={KEY} profileKey={PROFILE_KEY} />
+
       <div className="max-w-6xl mx-auto p-4 sm:p-6">
         {/* Header */}
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <div className="text-2xl font-bold tracking-tight">RentIt</div>
             <div className="text-sm text-neutral-600">
@@ -409,32 +558,169 @@ export default function App() {
             <div className="mt-3 h-[2px] w-80 rounded-full bg-gradient-to-r from-lime-400/0 via-lime-400 to-emerald-400/0" />
           </div>
 
-          <div className="flex flex-wrap gap-2 justify-end">
-            <button className={btnSecondary} onClick={() => setPreviewOpen(true)}>
-              Preview
-            </button>
-            <button className={btnSecondary} onClick={printPreview}>
-              Print / Save PDF
-            </button>
-            <button className={btnSecondary} onClick={exportJSON}>
-              Export
-            </button>
-            <button className={btnPrimary} onClick={() => importRef.current?.click()}>
-              Import
-            </button>
-            <input
-              ref={importRef}
-              type="file"
-              accept="application/json"
-              className="hidden"
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) importJSON(f);
-                e.target.value = "";
-              }}
-            />
+          {/* Normalized top actions grid + pinned help icon */}
+          <div className="w-full sm:w-[760px]">
+            <div className="flex items-center gap-2">
+              <div className="flex-1 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                <ActionButton onClick={() => setPreviewOpen(true)}>Preview</ActionButton>
+                <ActionButton onClick={printPreview}>Print / Save PDF</ActionButton>
+                <ActionButton onClick={exportJSON}>Export</ActionButton>
+                <ActionFileButton onFile={(f) => importJSON(f)} tone="primary">
+                  Import
+                </ActionFileButton>
+              </div>
+
+              {/* Help icon pinned far-right */}
+              <button
+                type="button"
+                className="print:hidden h-10 w-10 rounded-xl border border-neutral-200 bg-white hover:bg-neutral-50 text-neutral-900 flex items-center justify-center shadow-sm active:translate-y-[1px] transition"
+                onClick={() => setHelpOpen(true)}
+                title="Help"
+                aria-label="Help"
+              >
+                <HelpIcon className="h-5 w-5" />
+              </button>
+            </div>
           </div>
         </div>
+
+        {/* Preview modal */}
+        {previewOpen && (
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-3 z-50">
+            <div className="w-full max-w-5xl bg-white rounded-2xl shadow-xl border border-neutral-200 overflow-hidden">
+              <div className="p-3 border-b flex items-center justify-between">
+                <div className="font-semibold">Preview — RentIt report</div>
+                <div className="flex gap-2">
+                  <button
+                    className="px-3 py-2 rounded-xl text-sm font-medium border border-neutral-200 bg-white hover:bg-neutral-50 shadow-sm transition"
+                    onClick={printPreview}
+                  >
+                    Print / Save PDF
+                  </button>
+                  <button
+                    className="px-3 py-2 rounded-xl text-sm font-medium border border-neutral-900 bg-neutral-900 text-white hover:bg-neutral-800 shadow-sm transition"
+                    onClick={() => setPreviewOpen(false)}
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-6 overflow-auto max-h-[80vh]">
+                <div id="rentit-print">
+                  <div className="text-xl font-bold">{profile.org || "ToolStack"}</div>
+                  <div className="text-sm text-neutral-600">Rental unit report</div>
+                  <div className="mt-2 h-[2px] w-72 rounded-full bg-gradient-to-r from-lime-400/0 via-lime-400 to-emerald-400/0" />
+
+                  <div className="mt-3 text-sm">
+                    <div>
+                      <span className="text-neutral-600">Prepared by:</span> {profile.user || "-"}
+                    </div>
+                    <div>
+                      <span className="text-neutral-600">Generated:</span> {new Date().toLocaleString()}
+                    </div>
+                  </div>
+
+                  <div className="mt-4 rounded-2xl border border-neutral-200 p-3 text-sm">
+                    <div className="font-semibold">Unit</div>
+                    <div className="mt-1 text-neutral-700">Label: {state.unit?.label || "-"}</div>
+                    <div className="text-neutral-700">Address: {state.unit?.address || "-"}</div>
+                    <div className="text-neutral-700">Move-in: {state.unit?.moveInDate || "-"}</div>
+                    <div className="text-neutral-700">Warm rent (ref): {moneyFmt(state.unit?.warmRent || 0, currency)}</div>
+                    <div className="text-neutral-700">Cold rent (ref): {moneyFmt(state.unit?.coldRent || 0, currency)}</div>
+                    <div className="text-neutral-700">Deposit (ref): {moneyFmt(state.unit?.deposit || 0, currency)}</div>
+                    {state.unit?.notes ? (
+                      <div className="mt-2 text-neutral-700 whitespace-pre-wrap">Notes: {state.unit.notes}</div>
+                    ) : null}
+                  </div>
+
+                  <div className="mt-4 rounded-2xl border border-neutral-200 p-3 text-sm">
+                    <div className="font-semibold">Landlord</div>
+                    <div className="mt-1 text-neutral-700">Name: {state.unit?.landlord?.name || "-"}</div>
+                    <div className="text-neutral-700">Email: {state.unit?.landlord?.email || "-"}</div>
+                    <div className="text-neutral-700">Phone: {state.unit?.landlord?.phone || "-"}</div>
+                    <div className="text-neutral-700">Address: {state.unit?.landlord?.address || "-"}</div>
+                  </div>
+
+                  <div className="mt-4 rounded-2xl border border-neutral-200 p-3 text-sm">
+                    <div className="font-semibold">Costs</div>
+                    <div className="mt-1 text-neutral-700">
+                      Recurring (monthly estimate):{" "}
+                      <span className="font-semibold">{moneyFmt(recurringMonthlyTotal, currency)}</span>
+                    </div>
+                    <div className="text-neutral-700">
+                      One-off total: <span className="font-semibold">{moneyFmt(oneOffTotal, currency)}</span>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 rounded-2xl border border-neutral-200 p-3 text-sm">
+                    <div className="font-semibold">Issues</div>
+                    <div className="mt-1 text-neutral-700">Open issues: {openIssueCount}</div>
+                    <div className="mt-2 space-y-2">
+                      {(state.issues || []).slice(0, 12).map((x) => (
+                        <div key={x.id} className="border-t pt-2 first:border-t-0 first:pt-0">
+                          <div>
+                            <div className="font-medium">{x.title}</div>
+                            <div className="text-neutral-600 text-sm">
+                              {x.room ? `${x.room} • ` : ""}
+                              {x.status}
+                              <span className={`ml-2 text-xs px-2 py-1 rounded-full border ${badge[x.severity] || badge.medium}`}>
+                                {x.severity}
+                              </span>
+                            </div>
+                            {x.details ? <div className="text-neutral-700 text-sm">{x.details}</div> : null}
+                            {x.evidenceRef ? <div className="text-neutral-600 text-sm">Evidence: {x.evidenceRef}</div> : null}
+                          </div>
+                        </div>
+                      ))}
+                      {(state.issues || []).length > 12 ? (
+                        <div className="text-neutral-500 text-xs">(Showing first 12 issues)</div>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  <div className="mt-4 rounded-2xl border border-neutral-200 p-3 text-sm">
+                    <div className="font-semibold">Incident log</div>
+                    <div className="mt-1 text-neutral-700">Range: {from} → {to}</div>
+                    <div className="mt-2 space-y-2">
+                      {incidentsFiltered.slice(0, 12).map((x) => (
+                        <div key={x.id} className="border-t pt-2 first:border-t-0 first:pt-0">
+                          <div className="text-neutral-600">
+                            {x.date} • {x.type}
+                            <span className={`ml-2 text-xs px-2 py-1 rounded-full border ${badge[x.severity] || badge.medium}`}>
+                              {x.severity}
+                            </span>
+                          </div>
+                          <div className="font-medium">{x.summary}</div>
+                          {x.details ? <div className="text-neutral-700">{x.details}</div> : null}
+                          {x.evidenceRef ? <div className="text-neutral-600">Evidence: {x.evidenceRef}</div> : null}
+                        </div>
+                      ))}
+                      {incidentsFiltered.length > 12 ? (
+                        <div className="text-neutral-500 text-xs">(Showing first 12 incidents in range)</div>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  <div className="mt-6 grid grid-cols-2 gap-6 text-sm">
+                    <div>
+                      <div className="text-neutral-600">Tenant</div>
+                      <div className="mt-8 border-t pt-2">Signature</div>
+                    </div>
+                    <div>
+                      <div className="text-neutral-600">Landlord / Agent</div>
+                      <div className="mt-8 border-t pt-2">Signature</div>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 text-xs text-neutral-500">
+                    Storage key: <span className="font-mono">{KEY}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Main grid */}
         <div className="mt-4 grid grid-cols-1 lg:grid-cols-4 gap-4">
@@ -480,7 +766,8 @@ export default function App() {
                 Open issues: <span className="font-semibold">{openIssueCount}</span>
               </div>
               <div className="text-sm text-neutral-700">
-                Recurring / month (est.): <span className="font-semibold">{moneyFmt(recurringMonthlyTotal, currency)}</span>
+                Recurring / month (est.):{" "}
+                <span className="font-semibold">{moneyFmt(recurringMonthlyTotal, currency)}</span>
               </div>
               <div className="text-sm text-neutral-700">
                 One-off total: <span className="font-semibold">{moneyFmt(oneOffTotal, currency)}</span>
@@ -635,7 +922,10 @@ export default function App() {
               <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-3">
                 <div className="flex items-center justify-between gap-2">
                   <div className="font-semibold">Recurring costs</div>
-                  <button className={btnSecondary} onClick={addRecurring}>
+                  <button
+                    className="print:hidden px-3 py-2 rounded-xl text-sm font-medium border border-neutral-200 bg-white shadow-sm hover:bg-neutral-50 active:translate-y-[1px] transition"
+                    onClick={addRecurring}
+                  >
                     + Item
                   </button>
                 </div>
@@ -648,7 +938,7 @@ export default function App() {
                         <div className="flex items-start justify-between gap-2">
                           <div className="text-sm font-medium">{it.label || "Recurring item"}</div>
                           <button
-                            className="px-3 py-1.5 rounded-xl bg-white border border-neutral-200 hover:bg-neutral-50"
+                            className="print:hidden px-3 py-1.5 rounded-xl bg-white border border-neutral-200 hover:bg-neutral-50"
                             onClick={() => deleteRecurring(it.id)}
                           >
                             Delete
@@ -691,14 +981,18 @@ export default function App() {
                   )}
                 </div>
                 <div className="mt-2 text-sm text-neutral-700">
-                  Estimated monthly total: <span className="font-semibold">{moneyFmt(recurringMonthlyTotal, currency)}</span>
+                  Estimated monthly total:{" "}
+                  <span className="font-semibold">{moneyFmt(recurringMonthlyTotal, currency)}</span>
                 </div>
               </div>
 
               <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-3">
                 <div className="flex items-center justify-between gap-2">
                   <div className="font-semibold">One-off costs</div>
-                  <button className={btnSecondary} onClick={addOneOff}>
+                  <button
+                    className="print:hidden px-3 py-2 rounded-xl text-sm font-medium border border-neutral-200 bg-white shadow-sm hover:bg-neutral-50 active:translate-y-[1px] transition"
+                    onClick={addOneOff}
+                  >
                     + Item
                   </button>
                 </div>
@@ -711,7 +1005,7 @@ export default function App() {
                         <div className="flex items-start justify-between gap-2">
                           <div className="text-sm font-medium">{it.label || "One-off item"}</div>
                           <button
-                            className="px-3 py-1.5 rounded-xl bg-white border border-neutral-200 hover:bg-neutral-50"
+                            className="print:hidden px-3 py-1.5 rounded-xl bg-white border border-neutral-200 hover:bg-neutral-50"
                             onClick={() => deleteOneOff(it.id)}
                           >
                             Delete
@@ -763,11 +1057,21 @@ export default function App() {
             <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-2">
               <label className="text-sm md:col-span-2">
                 <div className="text-neutral-600">Title</div>
-                <input className={inputBase} value={issueTitle} onChange={(e) => setIssueTitle(e.target.value)} placeholder="e.g., Heating not working in bedroom" />
+                <input
+                  className={inputBase}
+                  value={issueTitle}
+                  onChange={(e) => setIssueTitle(e.target.value)}
+                  placeholder="e.g., Heating not working in bedroom"
+                />
               </label>
               <label className="text-sm">
                 <div className="text-neutral-600">Room / Area</div>
-                <input className={inputBase} value={issueRoom} onChange={(e) => setIssueRoom(e.target.value)} placeholder="e.g., Bedroom" />
+                <input
+                  className={inputBase}
+                  value={issueRoom}
+                  onChange={(e) => setIssueRoom(e.target.value)}
+                  placeholder="e.g., Bedroom"
+                />
               </label>
               <label className="text-sm">
                 <div className="text-neutral-600">Status</div>
@@ -787,16 +1091,29 @@ export default function App() {
               </label>
               <label className="text-sm">
                 <div className="text-neutral-600">Evidence ref</div>
-                <input className={inputBase} value={issueEvidence} onChange={(e) => setIssueEvidence(e.target.value)} placeholder="Photo # / email date / file name" />
+                <input
+                  className={inputBase}
+                  value={issueEvidence}
+                  onChange={(e) => setIssueEvidence(e.target.value)}
+                  placeholder="Photo # / email date / file name"
+                />
               </label>
               <label className="text-sm md:col-span-2">
                 <div className="text-neutral-600">Details</div>
-                <textarea className={`${inputBase} min-h-[80px]`} value={issueDetails} onChange={(e) => setIssueDetails(e.target.value)} placeholder="What happened, when, impact, what you want fixed" />
+                <textarea
+                  className={`${inputBase} min-h-[80px]`}
+                  value={issueDetails}
+                  onChange={(e) => setIssueDetails(e.target.value)}
+                  placeholder="What happened, when, impact, what you want fixed"
+                />
               </label>
             </div>
 
             <div className="mt-3 flex items-center justify-end">
-              <button className={btnPrimary} onClick={addIssue}>
+              <button
+                className="print:hidden px-3 py-2 rounded-xl text-sm font-medium border border-neutral-900 bg-neutral-900 text-white shadow-sm hover:bg-neutral-800 active:translate-y-[1px] transition"
+                onClick={addIssue}
+              >
                 Add issue
               </button>
             </div>
@@ -804,12 +1121,7 @@ export default function App() {
             <div className="mt-4 space-y-3">
               {state.issues?.length ? (
                 <>
-                  <IssueGroup
-                    title="Open"
-                    items={issuesByStatus.open}
-                    onUpdate={updateIssue}
-                    onDelete={deleteIssue}
-                  />
+                  <IssueGroup title="Open" items={issuesByStatus.open} onUpdate={updateIssue} onDelete={deleteIssue} />
                   <IssueGroup
                     title="In progress"
                     items={issuesByStatus.progress}
@@ -864,21 +1176,39 @@ export default function App() {
               </label>
               <label className="text-sm">
                 <div className="text-neutral-600">Evidence ref</div>
-                <input className={inputBase} value={incEvidence} onChange={(e) => setIncEvidence(e.target.value)} placeholder="Email subject / photo # / file" />
+                <input
+                  className={inputBase}
+                  value={incEvidence}
+                  onChange={(e) => setIncEvidence(e.target.value)}
+                  placeholder="Email subject / photo # / file"
+                />
               </label>
               <label className="text-sm md:col-span-2">
                 <div className="text-neutral-600">Summary</div>
-                <input className={inputBase} value={incSummary} onChange={(e) => setIncSummary(e.target.value)} placeholder="Short: what happened" />
+                <input
+                  className={inputBase}
+                  value={incSummary}
+                  onChange={(e) => setIncSummary(e.target.value)}
+                  placeholder="Short: what happened"
+                />
               </label>
               <label className="text-sm md:col-span-2">
                 <div className="text-neutral-600">Details</div>
-                <textarea className={`${inputBase} min-h-[90px]`} value={incDetails} onChange={(e) => setIncDetails(e.target.value)} placeholder="Facts, times, who said what, next step" />
+                <textarea
+                  className={`${inputBase} min-h-[90px]`}
+                  value={incDetails}
+                  onChange={(e) => setIncDetails(e.target.value)}
+                  placeholder="Facts, times, who said what, next step"
+                />
               </label>
             </div>
 
             <div className="mt-3 flex items-center justify-between gap-3 flex-wrap">
               <div className="text-sm text-neutral-600">Tip: put evidence IDs you can cross-reference later.</div>
-              <button className={btnPrimary} onClick={addIncident}>
+              <button
+                className="print:hidden px-3 py-2 rounded-xl text-sm font-medium border border-neutral-900 bg-neutral-900 text-white shadow-sm hover:bg-neutral-800 active:translate-y-[1px] transition"
+                onClick={addIncident}
+              >
                 Add incident
               </button>
             </div>
@@ -888,7 +1218,9 @@ export default function App() {
               <div className="flex items-end justify-between gap-3 flex-wrap">
                 <div>
                   <div className="font-semibold">Incidents (filtered)</div>
-                  <div className="text-sm text-neutral-600">From {from} to {to}</div>
+                  <div className="text-sm text-neutral-600">
+                    From {from} to {to}
+                  </div>
                 </div>
                 <div className="flex gap-2 flex-wrap">
                   <label className="text-sm">
@@ -925,7 +1257,7 @@ export default function App() {
                           ) : null}
                         </div>
                         <button
-                          className="px-3 py-1.5 rounded-xl bg-white border border-neutral-200 hover:bg-neutral-50"
+                          className="print:hidden px-3 py-1.5 rounded-xl bg-white border border-neutral-200 hover:bg-neutral-50"
                           onClick={() => deleteIncident(x.id)}
                         >
                           Delete
@@ -938,131 +1270,6 @@ export default function App() {
             </div>
           </div>
         </div>
-
-        {/* Preview modal */}
-        {previewOpen && (
-          <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-3 z-50">
-            <div className="w-full max-w-5xl bg-white rounded-2xl shadow-xl border border-neutral-200 overflow-hidden">
-              <div className="p-3 border-b flex items-center justify-between">
-                <div className="font-semibold">Preview — RentIt report</div>
-                <div className="flex gap-2">
-                  <button className={btnSecondary} onClick={printPreview}>
-                    Print / Save PDF
-                  </button>
-                  <button className={btnPrimary} onClick={() => setPreviewOpen(false)}>
-                    Close
-                  </button>
-                </div>
-              </div>
-
-              <div className="p-6 overflow-auto max-h-[80vh]">
-                <div className="text-xl font-bold">{profile.org || "ToolStack"}</div>
-                <div className="text-sm text-neutral-600">Rental unit report</div>
-                <div className="mt-2 h-[2px] w-72 rounded-full bg-gradient-to-r from-lime-400/0 via-lime-400 to-emerald-400/0" />
-
-                <div className="mt-3 text-sm">
-                  <div>
-                    <span className="text-neutral-600">Prepared by:</span> {profile.user || "-"}
-                  </div>
-                  <div>
-                    <span className="text-neutral-600">Generated:</span> {new Date().toLocaleString()}
-                  </div>
-                </div>
-
-                <div className="mt-4 rounded-2xl border border-neutral-200 p-3 text-sm">
-                  <div className="font-semibold">Unit</div>
-                  <div className="mt-1 text-neutral-700">Label: {state.unit?.label || "-"}</div>
-                  <div className="text-neutral-700">Address: {state.unit?.address || "-"}</div>
-                  <div className="text-neutral-700">Move-in: {state.unit?.moveInDate || "-"}</div>
-                  <div className="text-neutral-700">Warm rent (ref): {moneyFmt(state.unit?.warmRent || 0, currency)}</div>
-                  <div className="text-neutral-700">Cold rent (ref): {moneyFmt(state.unit?.coldRent || 0, currency)}</div>
-                  <div className="text-neutral-700">Deposit (ref): {moneyFmt(state.unit?.deposit || 0, currency)}</div>
-                  {state.unit?.notes ? (
-                    <div className="mt-2 text-neutral-700 whitespace-pre-wrap">Notes: {state.unit.notes}</div>
-                  ) : null}
-                </div>
-
-                <div className="mt-4 rounded-2xl border border-neutral-200 p-3 text-sm">
-                  <div className="font-semibold">Landlord</div>
-                  <div className="mt-1 text-neutral-700">Name: {state.unit?.landlord?.name || "-"}</div>
-                  <div className="text-neutral-700">Email: {state.unit?.landlord?.email || "-"}</div>
-                  <div className="text-neutral-700">Phone: {state.unit?.landlord?.phone || "-"}</div>
-                  <div className="text-neutral-700">Address: {state.unit?.landlord?.address || "-"}</div>
-                </div>
-
-                <div className="mt-4 rounded-2xl border border-neutral-200 p-3 text-sm">
-                  <div className="font-semibold">Costs</div>
-                  <div className="mt-1 text-neutral-700">
-                    Recurring (monthly estimate): <span className="font-semibold">{moneyFmt(recurringMonthlyTotal, currency)}</span>
-                  </div>
-                  <div className="text-neutral-700">
-                    One-off total: <span className="font-semibold">{moneyFmt(oneOffTotal, currency)}</span>
-                  </div>
-                </div>
-
-                <div className="mt-4 rounded-2xl border border-neutral-200 p-3 text-sm">
-                  <div className="font-semibold">Issues</div>
-                  <div className="mt-1 text-neutral-700">Open issues: {openIssueCount}</div>
-                  <div className="mt-2 space-y-2">
-                    {(state.issues || []).slice(0, 12).map((x) => (
-                      <div key={x.id} className="border-t pt-2 first:border-t-0 first:pt-0">
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <div className="font-medium">{x.title}</div>
-                            <div className="text-neutral-600 text-sm">
-                              {x.room ? `${x.room} • ` : ""}{x.status}
-                              <span className={`ml-2 text-xs px-2 py-1 rounded-full border ${badge[x.severity] || badge.medium}`}>
-                                {x.severity}
-                              </span>
-                            </div>
-                            {x.details ? <div className="text-neutral-700 text-sm">{x.details}</div> : null}
-                            {x.evidenceRef ? <div className="text-neutral-600 text-sm">Evidence: {x.evidenceRef}</div> : null}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                    {(state.issues || []).length > 12 ? (
-                      <div className="text-neutral-500 text-xs">(Showing first 12 issues)</div>
-                    ) : null}
-                  </div>
-                </div>
-
-                <div className="mt-4 rounded-2xl border border-neutral-200 p-3 text-sm">
-                  <div className="font-semibold">Incident log</div>
-                  <div className="mt-1 text-neutral-700">Range: {from} → {to}</div>
-                  <div className="mt-2 space-y-2">
-                    {incidentsFiltered.slice(0, 12).map((x) => (
-                      <div key={x.id} className="border-t pt-2 first:border-t-0 first:pt-0">
-                        <div className="text-neutral-600">{x.date} • {x.type}</div>
-                        <div className="font-medium">{x.summary}</div>
-                        {x.details ? <div className="text-neutral-700">{x.details}</div> : null}
-                        {x.evidenceRef ? <div className="text-neutral-600">Evidence: {x.evidenceRef}</div> : null}
-                      </div>
-                    ))}
-                    {incidentsFiltered.length > 12 ? (
-                      <div className="text-neutral-500 text-xs">(Showing first 12 incidents in range)</div>
-                    ) : null}
-                  </div>
-                </div>
-
-                <div className="mt-6 grid grid-cols-2 gap-6 text-sm">
-                  <div>
-                    <div className="text-neutral-600">Tenant</div>
-                    <div className="mt-8 border-t pt-2">Signature</div>
-                  </div>
-                  <div>
-                    <div className="text-neutral-600">Landlord / Agent</div>
-                    <div className="mt-8 border-t pt-2">Signature</div>
-                  </div>
-                </div>
-
-                <div className="mt-6 text-xs text-neutral-500">
-                  Storage key: <span className="font-mono">{KEY}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Footer link */}
         <div className="mt-6 text-sm text-neutral-600">
@@ -1106,7 +1313,7 @@ function IssueGroup({ title, items, onUpdate, onDelete, muted = false }) {
 
               <div className="flex flex-col items-end gap-2">
                 <button
-                  className="px-3 py-1.5 rounded-xl bg-white border border-neutral-200 hover:bg-neutral-50"
+                  className="print:hidden px-3 py-1.5 rounded-xl bg-white border border-neutral-200 hover:bg-neutral-50"
                   onClick={() => onDelete(x.id)}
                 >
                   Delete
